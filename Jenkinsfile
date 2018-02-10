@@ -2,10 +2,6 @@ def container
 
 pipeline {
 
-  environment {
-    def shortCommit
-  }
-
   agent any
 
   stages {
