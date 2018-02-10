@@ -1,5 +1,11 @@
 def container
+
 pipeline {
+
+  environment {
+    def shortCommit
+  }
+
   agent any
 
   stages {
@@ -8,7 +14,8 @@ pipeline {
     stage('Clone repository') {
       steps {
         checkout scm
-        shortCommit = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
+        script {
+          sh 'shortCommit = trim(git rev-parse --short HEAD)'
       }
     }
 
