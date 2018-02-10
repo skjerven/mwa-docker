@@ -16,6 +16,7 @@ pipeline {
         checkout scm
         script {
           sh 'shortCommit = trim(git rev-parse --short HEAD)'
+        }
       }
     }
 
