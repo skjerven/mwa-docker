@@ -4,6 +4,11 @@ pipeline {
 
   agent any
 
+  options {
+    timeout(time: 1, unit: 'HOURS')
+    timestamps()
+  }
+
   stages {
     /* Checkout git repo with Dockerfiles to build and create a shortened commit ID
      * that will be used in tagging containers pushed to Docker Hub */
@@ -11,7 +16,7 @@ pipeline {
       steps {
         checkout scm
         script {
-          sh 'shortCommit = trim(git rev-parse --short HEAD)'
+          shortCommit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
         }
       }
     }
@@ -20,7 +25,7 @@ pipeline {
     stage('Build image') {
       steps {
         script {
-          container = docker.build("bskjerven/mwa-docker:${env.BUILD_ID}")
+          container = docker.build("bskjerven/mwa-docker")
         }
       }
     }
@@ -60,10 +65,16 @@ pipeline {
       }
     }
     failure {
-      sendEmail('brian.skjerven@pawsey.org.au')
+      subject: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
+      body: """<p>FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]':</p>
+        <p>Check console output at &QUOT;<a href='${env.BUILD_URL}'>${env.JOB_NAME} [${env.BUILD_NUMBER}]</a>&QUOT;</p>""",
+      recipientProviders: [[$class: 'DevelopersRecipientProvider']]
     }
     changed {
-      sendEmail('brian.skjerven@pawsey.org.au')
+      subject: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
+      body: """<p>SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]':</p>
+        <p>Check console output at &QUOT;<a href='${env.BUILD_URL}'>${env.JOB_NAME} [${env.BUILD_NUMBER}]</a>&QUOT;</p>""",
+      recipientProviders: [[$class: 'DevelopersRecipientProvider']]
     }
   }
 }
